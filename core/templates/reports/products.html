@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>🍕 Отчёт по ассортименту</h1>
+
+<form method="get" class="card card-body my-3">
+    <div class="row g-2">
+        <div class="col-md-4"><input type="date" name="date_from" value="{{ date_from|date:'Y-m-d' }}"
+                class="form-control"></div>
+        <div class="col-md-4"><input type="date" name="date_to" value="{{ date_to|date:'Y-m-d' }}" class="form-control">
+        </div>
+        <div class="col-md-4"><button class="btn btn-primary w-100">Применить</button></div>
+    </div>
+</form>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card mb-4">
+            <div class="card-body">
+                <h4>🏆 ТОП-10 товаров по продажам</h4>
+                <canvas id="chart-top" height="250"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-body">
+                <h4>📊 Доля категорий</h4>
+                <canvas id="chart-categories" height="250"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<h3>Полный ТОП-20 товаров</h3>
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Товар</th>
+            <th>Категория</th>
+            <th>Продано</th>
+            <th class="text-end">Выручка</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for r in top %}
+        <tr>
+            <td>{{ r.product__name }}</td>
+            <td>{{ r.category_display }}</td>
+            <td>{{ r.qty_sold }}</td>
+            <td class="text-end">{{ r.revenue }} ₽</td>
+        </tr>
+        {% empty %}<tr>
+            <td colspan="4" class="text-muted text-center">Нет данных</td>
+        </tr>{% endfor %}
+    </tbody>
+</table>
+
+{{ chart_data|json_script:"chart-data" }}
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+<script>
+    (function () {
+        const data = JSON.parse(document.getElementById("chart-data").textContent);
+
+        new Chart(document.getElementById("chart-top"), {
+            type: "bar",
+            data: {
+                labels: data.top.labels,
+                datasets: [{
+                    label: "Продано шт.",
+                    data: data.top.qty,
+                    backgroundColor: "#198754",
+                }],
+            },
+            options: {
+                responsive: true,
+                indexAxis: "y"
+            },
+        });
+
+        new Chart(document.getElementById("chart-categories"), {
+            type: "pie",
+            data: {
+                labels: data.categories.labels,
+                datasets: [{
+                    data: data.categories.revenue,
+                    backgroundColor: ["#dc3545", "#0d6efd", "#ffc107", "#198754", "#6f42c1"],
+                }],
+            },
+            options: {
+                responsive: true
+            },
+        });
+    })();
+</script>
+{% endblock %}

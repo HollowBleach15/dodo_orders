@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>👥 Клиентская аналитика</h1>
+
+<form method="get" class="card card-body my-3">
+    <div class="row g-2">
+        <div class="col-md-4"><input type="date" name="date_from" value="{{ date_from|date:'Y-m-d' }}"
+                class="form-control"></div>
+        <div class="col-md-4"><input type="date" name="date_to" value="{{ date_to|date:'Y-m-d' }}" class="form-control">
+        </div>
+        <div class="col-md-4"><button class="btn btn-primary w-100">Применить</button></div>
+    </div>
+</form>
+
+<div class="card mb-4">
+    <div class="card-body">
+        <h4>🏆 ТОП-10 клиентов по выручке</h4>
+        <canvas id="chart-top-clients" height="100"></canvas>
+    </div>
+</div>
+
+<h3>Полный ТОП-20 клиентов</h3>
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>ФИО</th>
+            <th>Телефон</th>
+            <th>Заказов</th>
+            <th class="text-end">Выручка</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for r in top %}
+        <tr>
+            <td><a href="{% url 'client_detail' r.id %}">{{ r.full_name }}</a></td>
+            <td>{{ r.phone }}</td>
+            <td>{{ r.orders_total }}</td>
+            <td class="text-end">{{ r.revenue }} ₽</td>
+        </tr>
+        {% empty %}<tr>
+            <td colspan="4" class="text-muted text-center">Нет данных</td>
+        </tr>{% endfor %}
+    </tbody>
+</table>
+
+<h3 class="mt-4">💤 «Спящие» клиенты (нет заказов 60+ дней)</h3>
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>ФИО</th>
+            <th>Телефон</th>
+            <th>Email</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for c in inactive %}
+        <tr>
+            <td><a href="{% url 'client_detail' c.id %}">{{ c.full_name }}</a></td>
+            <td>{{ c.phone }}</td>
+            <td>{{ c.email|default:"—" }}</td>
+        </tr>
+        {% empty %}<tr>
+            <td colspan="3" class="text-muted text-center">Все клиенты активны</td>
+        </tr>{% endfor %}
+    </tbody>
+</table>
+
+{{ chart_data|json_script:"chart-data" }}
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+<script>
+    (function () {
+        const data = JSON.parse(document.getElementById("chart-data").textContent);
+
+        new Chart(document.getElementById("chart-top-clients"), {
+            type: "bar",
+            data: {
+                labels: data.top.labels,
+                datasets: [{
+                    label: "Выручка, ₽",
+                    data: data.top.revenue,
+                    backgroundColor: "#ffc107",
+                }],
+            },
+            options: {
+                responsive: true
+            },
+        });
+    })();
+</script>
+{% endblock %}

@@ -1,0 +1,213 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>💰 Отчёт по выручке</h1>
+
+<form method="get" class="card card-body my-3">
+    <div class="row g-2">
+        <div class="col-md-3"><label>С</label>
+            <input type="date" name="date_from" value="{{ date_from|date:'Y-m-d' }}" class="form-control">
+        </div>
+        <div class="col-md-3"><label>По</label>
+            <input type="date" name="date_to" value="{{ date_to|date:'Y-m-d' }}" class="form-control">
+        </div>
+        <div class="col-md-4"><label>Филиал</label>
+            <select name="branch" class="form-select">
+                <option value="">— Все —</option>
+                {% for b in branches %}
+                <option value="{{ b.id }}" {% if selected_branch == b.id %}selected{% endif %}>{{ b.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-2 d-flex align-items-end">
+            <button class="btn btn-primary w-100">Применить</button>
+        </div>
+    </div>
+</form>
+
+<div class="row g-3 mb-3">
+    <div class="col-md-3">
+        <div class="card text-bg-primary">
+            <div class="card-body">
+                <h6>Заказов</h6>
+                <h2>{{ summary.orders_count }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-bg-success">
+            <div class="card-body">
+                <h6>Выручка</h6>
+                <h2>{{ summary.revenue }} ₽</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-bg-info">
+            <div class="card-body">
+                <h6>Средний чек</h6>
+                <h2>{{ summary.avg_check }} ₽</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-bg-danger">
+            <div class="card-body">
+                <h6>Отмены</h6>
+                <h2>{{ cancellation.rate }}%</h2>
+            </div>
+        </div>
+    </div>
+</div>
+
+<a href="{% url 'reports_revenue_xlsx' %}?date_from={{ date_from|date:'Y-m-d' }}&date_to={{ date_to|date:'Y-m-d' }}"
+    class="btn btn-success mb-3">⬇ Экспорт в Excel</a>
+
+<!-- ГРАФИК: выручка по дням -->
+<div class="card mb-4">
+    <div class="card-body">
+        <h4>📈 Динамика выручки по дням</h4>
+        <canvas id="chart-by-day" height="80"></canvas>
+    </div>
+</div>
+
+<!-- ГРАФИК: выручка по филиалам -->
+<div class="row">
+    <div class="col-md-7">
+        <div class="card mb-4">
+            <div class="card-body">
+                <h4>🏪 Выручка по филиалам</h4>
+                <canvas id="chart-by-branch" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-5">
+        <div class="card mb-4">
+            <div class="card-body">
+                <h4>🥧 Доля филиалов</h4>
+                <canvas id="chart-branch-pie" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<h3>Детализация по дням</h3>
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Дата</th>
+            <th>Заказов</th>
+            <th class="text-end">Выручка</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for r in by_day %}
+        <tr>
+            <td>{{ r.day|date:"d.m.Y" }}</td>
+            <td>{{ r.orders }}</td>
+            <td class="text-end">{{ r.revenue }} ₽</td>
+        </tr>
+        {% empty %}<tr>
+            <td colspan="3" class="text-muted text-center">Нет данных</td>
+        </tr>{% endfor %}
+    </tbody>
+</table>
+
+{{ chart_data|json_script:"chart-data" }}
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+<script>
+    (function () {
+        const data = JSON.parse(document.getElementById("chart-data").textContent);
+
+        // 1. Линейный график — выручка по дням
+        new Chart(document.getElementById("chart-by-day"), {
+            type: "line",
+            data: {
+                labels: data.by_day.labels,
+                datasets: [{
+                        label: "Выручка, ₽",
+                        data: data.by_day.revenue,
+                        borderColor: "#198754",
+                        backgroundColor: "rgba(25,135,84,.15)",
+                        fill: true,
+                        tension: 0.3,
+                        yAxisID: "y",
+                    },
+                    {
+                        label: "Заказов",
+                        data: data.by_day.orders,
+                        borderColor: "#0d6efd",
+                        backgroundColor: "rgba(13,110,253,.1)",
+                        tension: 0.3,
+                        yAxisID: "y1",
+                    },
+                ],
+            },
+            options: {
+                responsive: true,
+                interaction: {
+                    mode: "index",
+                    intersect: false
+                },
+                scales: {
+                    y: {
+                        type: "linear",
+                        position: "left",
+                        title: {
+                            display: true,
+                            text: "Выручка, ₽"
+                        }
+                    },
+                    y1: {
+                        type: "linear",
+                        position: "right",
+                        title: {
+                            display: true,
+                            text: "Заказов"
+                        },
+                        grid: {
+                            drawOnChartArea: false
+                        }
+                    },
+                },
+            },
+        });
+
+        // 2. Столбчатый — по филиалам
+        new Chart(document.getElementById("chart-by-branch"), {
+            type: "bar",
+            data: {
+                labels: data.by_branch.labels,
+                datasets: [{
+                    label: "Выручка, ₽",
+                    data: data.by_branch.revenue,
+                    backgroundColor: "#dc3545",
+                }],
+            },
+            options: {
+                responsive: true,
+                indexAxis: "y"
+            },
+        });
+
+        // 3. Круговой — доля филиалов
+        new Chart(document.getElementById("chart-branch-pie"), {
+            type: "doughnut",
+            data: {
+                labels: data.by_branch.labels,
+                datasets: [{
+                    data: data.by_branch.revenue,
+                    backgroundColor: ["#dc3545", "#0d6efd", "#198754", "#ffc107", "#6f42c1",
+                        "#fd7e14"
+                    ],
+                }],
+            },
+            options: {
+                responsive: true
+            },
+        });
+    })();
+</script>
+{% endblock %}

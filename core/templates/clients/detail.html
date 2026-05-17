@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="d-flex justify-content-between mb-3">
+    <h1>{{ client.full_name }}</h1>
+    <a href="{% url 'client_edit' client.pk %}" class="btn btn-warning">Редактировать</a>
+</div>
+
+<div class="card card-body mb-3">
+    <p>📞 {{ client.phone }}<br>
+        ✉ {{ client.email|default:"—" }}<br>
+        🏠 {{ client.address|default:"—" }}<br>
+        Создан: {{ client.created_at|date:"d.m.Y" }}</p>
+</div>
+
+<h3>История заказов ({{ client.orders_count }})</h3>
+<table class="table table-hover">
+    <thead>
+        <tr>
+            <th>#</th>
+            <th>Дата</th>
+            <th>Филиал</th>
+            <th>Статус</th>
+            <th class="text-end">Сумма</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for o in orders %}
+        <tr>
+            <td><a href="{% url 'order_detail' o.pk %}">#{{ o.pk }}</a></td>
+            <td>{{ o.created_at|date:"d.m.Y H:i" }}</td>
+            <td>{{ o.branch.name }}</td>
+            <td>{{ o.get_status_display }}</td>
+            <td class="text-end">{{ o.total }} ₽</td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="5" class="text-muted text-center">Нет заказов</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

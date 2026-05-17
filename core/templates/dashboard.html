@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block content %}
+<h1 class="mb-4">Сводка</h1>
+<div class="row g-3">
+    <div class="col-md-3">
+        <div class="card text-bg-primary">
+            <div class="card-body">
+                <h6>Всего заказов</h6>
+                <h2>{{ stats.orders_total }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-bg-warning">
+            <div class="card-body">
+                <h6>Новые</h6>
+                <h2>{{ stats.orders_new }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-bg-info">
+            <div class="card-body">
+                <h6>В работе</h6>
+                <h2>{{ stats.orders_in_work }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-bg-success">
+            <div class="card-body">
+                <h6>Клиентов</h6>
+                <h2>{{ stats.clients_total }}</h2>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

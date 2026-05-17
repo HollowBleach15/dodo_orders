@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>📊 Отчётность</h1>
+<div class="row g-3 mt-3">
+    <div class="col-md-4"><a href="{% url 'reports_revenue' %}" class="text-decoration-none">
+            <div class="card text-bg-primary">
+                <div class="card-body">
+                    <h3>💰 Выручка</h3>
+                    <p>По дням, филиалам, часам</p>
+                </div>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-4"><a href="{% url 'reports_products' %}" class="text-decoration-none">
+            <div class="card text-bg-success">
+                <div class="card-body">
+                    <h3>🍕 Ассортимент</h3>
+                    <p>ТОП продаж, по категориям</p>
+                </div>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-4"><a href="{% url 'reports_clients' %}" class="text-decoration-none">
+            <div class="card text-bg-warning">
+                <div class="card-body">
+                    <h3>👥 Клиенты</h3>
+                    <p>ТОП клиентов, «спящие»</p>
+                </div>
+            </div>
+        </a>
+    </div>
+</div>
+{% endblock %}
