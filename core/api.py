@@ -4,7 +4,7 @@ from rest_framework.response import Response
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
 from django_filters.rest_framework import DjangoFilterBackend
-from django.contrib.auth.models import AbstractUser
+from django.contrib.auth.models import User
 
 from .models import Client, Order, Product, Branch
 from .serializers import (
@@ -67,11 +67,12 @@ class OrderViewSet(viewsets.ModelViewSet):
             Order.objects.select_related("client", "branch")
             .prefetch_related("items__product")
         )
-        # Сотрудники филиала и франчайзи видят только свои точки
+        if not isinstance(user, User):   # ← вместо user.groups.filter(...)
+            return qs
         if user.groups.filter(
             name__in=["branch_employee", "franchise_owner"]
         ).exists():
-            branch_ids = user.branches.values_list("id", flat=True)  # type: ignore
+            branch_ids = user.branches.values_list("id", flat=True)  # type: ignore[attr-defined]
             qs = qs.filter(branch__in=branch_ids)
         return qs
 
