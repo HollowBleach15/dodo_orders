@@ -4,8 +4,9 @@ from django.shortcuts import render
 from django.http import HttpResponse
 from openpyxl import Workbook
 
-from core.models import Branch
+from core.models import Branch, Order
 from .services import RevenueReport, ProductReport, ClientReport
+from .export import order_to_excel
 
 
 def _parse_dates(request):
@@ -126,3 +127,15 @@ def export_revenue_xlsx(request):
     wb.save(resp)
     return resp
 
+@login_required
+def order_export_excel(request, pk):
+    order = Order.objects.prefetch_related("items__product").select_related(
+        "client", "branch"
+    ).get(pk=pk)
+    data = order_to_excel(order)
+    response = HttpResponse(
+        data,
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    )
+    response["Content-Disposition"] = f'attachment; filename="order_{order.pk}.xlsx"'
+    return response

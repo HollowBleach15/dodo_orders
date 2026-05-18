@@ -19,7 +19,7 @@ class ClientSerializer(serializers.ModelSerializer):
     orders_count = serializers.IntegerField(read_only=True)
     class Meta:
         model = Client
-        fields = ["id", "full_name", "phone", "email", "address", "is_active", "created_at", "orders_count"]
+        fields = ["id", "full_name", "phone", "email", "address", "client_type", "is_active", "created_at", "orders_count"]
 
 
 class OrderItemSerializer(serializers.ModelSerializer):

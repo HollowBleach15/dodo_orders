@@ -1,5 +1,6 @@
 from django.db import transaction
 from .models import Order, OrderItem, Product
+from decimal import Decimal
 
 
 class OrderService:
@@ -22,6 +23,10 @@ class OrderService:
     def save_order_with_items(cls, order: Order, items_data: list) -> Order:
         """items_data = [{'product_id': int, 'quantity': int}, ...]"""
         order.save()
+        if order.discount_percent == Decimal("0") and order.client_id:
+            from .models import Client
+            client = Client.objects.get(pk=order.client_id)
+            order.discount_percent = client.default_discount
         OrderItem.objects.filter(order=order).delete()
         for row in items_data:
             product = Product.objects.get(pk=row["product_id"])
@@ -34,6 +39,8 @@ class OrderService:
         order.recalc_total()
         order.save(update_fields=["total"])
         return order
+    
+
 
     @classmethod
     def change_status(cls, order: Order, new_status: str) -> Order:

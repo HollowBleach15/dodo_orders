@@ -44,6 +44,26 @@ class Product(models.Model):
 
 class Client(models.Model):
     """Клиент (физлицо или организация)."""
+    CLIENT_TYPE_CHOICES = [
+        ("retail", "Розничный"),
+        ("corporate", "Корпоративный"),
+        ("franchisee", "Франчайзи"),
+    ]
+    client_type = models.CharField(
+        "Тип клиента", max_length=16, choices=CLIENT_TYPE_CHOICES, default="retail"
+    )
+
+    """Автоматическая скидка по типу (применяется в OrderService)"""
+    CLIENT_DISCOUNT_MAP = {
+        "retail": Decimal("0"),
+        "corporate": Decimal("5"),
+        "franchisee": Decimal("10"),
+    }
+
+    @property
+    def default_discount(self) -> Decimal:
+        return self.CLIENT_DISCOUNT_MAP.get(self.client_type, Decimal("0"))
+    
     orders: "models.Manager[Order]"
     full_name = models.CharField("ФИО / Название", max_length=200)
     phone = models.CharField("Телефон", max_length=32, unique=True)
@@ -140,3 +160,27 @@ class OrderItem(models.Model):
         if not self.price:
             self.price = self.product.price
         super().save(*args, **kwargs)
+
+class UserBranch(models.Model):
+    """Привязка сотрудника к одному или нескольким филиалам."""
+    user = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="user_branches",
+        verbose_name="Пользователь"
+    )
+    branch = models.ForeignKey(
+        Branch, on_delete=models.CASCADE, related_name="user_branches",
+        verbose_name="Филиал"
+    )
+
+    class Meta:
+        unique_together = [("user", "branch")]
+        verbose_name = "Доступ к филиалу"
+        verbose_name_plural = "Доступы к филиалам"
+
+    def __str__(self):
+        return f"{self.user.username} → {self.branch.name}"
+    
+User.add_to_class(
+    "branches",
+    property(lambda self: Branch.objects.filter(user_branches__user=self))
+)

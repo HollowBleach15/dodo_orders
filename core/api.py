@@ -11,6 +11,7 @@ from .serializers import (
     ClientSerializer, OrderSerializer, ProductSerializer, BranchSerializer,
 )
 from .services import OrderService
+from .permissions import IsManagerOrAbove
 
 
 class IsManagerOrReadOnly(permissions.BasePermission):
@@ -55,14 +56,24 @@ class ClientViewSet(viewsets.ModelViewSet):
 
 
 class OrderViewSet(viewsets.ModelViewSet):
-    queryset = (
-        Order.objects.select_related("client", "branch")
-        .prefetch_related("items__product")
-    )
     serializer_class = OrderSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsManagerOrAbove]
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ["status", "branch", "client", "order_type"]
+
+    def get_queryset(self):
+        user = self.request.user
+        qs = (
+            Order.objects.select_related("client", "branch")
+            .prefetch_related("items__product")
+        )
+        # Сотрудники филиала и франчайзи видят только свои точки
+        if user.groups.filter(
+            name__in=["branch_employee", "franchise_owner"]
+        ).exists():
+            branch_ids = user.branches.values_list("id", flat=True)  # type: ignore
+            qs = qs.filter(branch__in=branch_ids)
+        return qs
 
     @action(detail=True, methods=["post"])
     def change_status(self, request, pk=None):

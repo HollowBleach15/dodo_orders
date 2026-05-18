@@ -23,6 +23,7 @@ INSTALLED_APPS = [
     "django_celery_beat",
     "core",
     "reports",
+    "drf_spectacular",
 ]
 
 MIDDLEWARE = [
@@ -114,3 +115,26 @@ if "test" in sys.argv or "pytest" in sys.argv[0]:
     CELERY_TASK_ALWAYS_EAGER = True
     CELERY_TASK_EAGER_PROPAGATES = True
     CELERY_BROKER_URL = "memory://"
+
+# ---------- OpenAPI ----------
+SPECTACULAR_SETTINGS = {
+    "TITLE": "Dodo Orders API",
+    "DESCRIPTION": "REST API системы управления заказами",
+    "VERSION": "1.0.0",
+    "SERVE_INCLUDE_SCHEMA": False,
+}
+REST_FRAMEWORK["DEFAULT_SCHEMA_CLASS"] = "drf_spectacular.openapi.AutoSchema"
+
+if not DEBUG:
+    SECURE_HSTS_SECONDS = 31_536_000 # 1 год
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+    SECURE_SSL_REDIRECT = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_BROWSER_XSS_FILTER = True
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    X_FRAME_OPTIONS = "DENY"
+    SECURE_REFERRER_POLICY = "strict-origin-when-cross-origin"
+    # Если за Nginx/reverse-proxy:
+    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
