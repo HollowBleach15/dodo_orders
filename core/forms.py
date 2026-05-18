@@ -5,10 +5,11 @@ from .models import Order, Client
 class ClientForm(forms.ModelForm):
     class Meta:
         model = Client
-        fields = ["full_name", "phone", "email", "address", "is_active"]
+        fields = ["full_name", "phone", "email", "address", "client_type", "is_active"]
         widgets: dict[str, forms.Widget] = {
             **{f: forms.TextInput(attrs={"class": "form-control"})
                for f in ["full_name", "phone", "email", "address"]},
+            "client_type": forms.Select(attrs={"class": "form-select"}),
             "is_active": forms.CheckboxInput(attrs={"class": "form-check-input"}),
         }
 
