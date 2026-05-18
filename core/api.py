@@ -11,27 +11,10 @@ from .serializers import (
     ClientSerializer, OrderSerializer, ProductSerializer, BranchSerializer,
 )
 from .services import OrderService
-from .permissions import IsManagerOrAbove
-
-
-class IsManagerOrReadOnly(permissions.BasePermission):
-    """Менеджеры/админы — полный доступ, остальные — только чтение."""
-
-    def has_permission(self, request, view):
-        user = request.user
-        if request.method in permissions.SAFE_METHODS:
-            return bool(user and user.is_authenticated)
-        if not isinstance(user, User):
-            return False
-        return bool(
-            user.is_staff
-            or user.groups.filter(name="managers").exists()
-        )
+from .permissions import IsManagerOrAbove, IsManagerOrReadOnly
 
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
-    """Расширенный JWT: в токен зашиваем имя пользователя и роль."""
-
     @classmethod
     def get_token(cls, user):
         token = super().get_token(user)
@@ -72,13 +55,12 @@ class OrderViewSet(viewsets.ModelViewSet):
         if user.groups.filter(
             name__in=["branch_employee", "franchise_owner"]
         ).exists():
-            branch_ids = user.branches.values_list("id", flat=True)  # type: ignore[attr-defined]
+            branch_ids = user.branches.values_list("id", flat=True)
             qs = qs.filter(branch__in=branch_ids)
         return qs
 
     @action(detail=True, methods=["post"])
     def change_status(self, request, pk=None):
-        """POST /api/orders/{id}/change_status/ {"status": "in_work"}"""
         order = self.get_object()
         try:
             OrderService.change_status(order, request.data.get("status"))
@@ -87,7 +69,7 @@ class OrderViewSet(viewsets.ModelViewSet):
 
         try:
             from .tasks import notify_client_about_status
-            notify_client_about_status.delay(order.pk)  # type: ignore[attr-defined]
+            notify_client_about_status.delay(order.pk)
         except Exception as exc:
             import logging
             logging.getLogger(__name__).warning(

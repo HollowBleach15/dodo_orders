@@ -9,7 +9,6 @@ from core.models import Order, OrderItem, Client
 
 
 class RevenueReport:
-    """Отчёт по выручке."""
 
     @staticmethod
     def daily_revenue(date_from: date, date_to: date, branch_id: Optional[int] = None) -> dict:
@@ -64,7 +63,6 @@ class RevenueReport:
 
     @staticmethod
     def revenue_by_hour(date_from: date, date_to: date):
-        """Загрузка по часам для прогноза смен."""
         return list(
             Order.objects.filter(
                 created_at__date__gte=date_from,
@@ -78,7 +76,6 @@ class RevenueReport:
 
 
 class ProductReport:
-    """Отчёт по ассортименту."""
 
     @staticmethod
     def top_products(date_from: date, date_to: date, limit: int = 20):
@@ -101,7 +98,7 @@ class ProductReport:
             )
             .order_by("-qty_sold")[:limit]
         )
-        cache.set(cache_key, result, timeout=300)  # 5 минут
+        cache.set(cache_key, result, timeout=300)
         return result
 
     @staticmethod
@@ -123,7 +120,6 @@ class ProductReport:
 
 
 class ClientReport:
-    """Клиентская аналитика."""
 
     @staticmethod
     def top_clients(date_from: date, date_to: date, limit: int = 20):
@@ -137,13 +133,13 @@ class ClientReport:
                 orders_total=Count("orders"),
                 revenue=Sum("orders__total"),
             )
-            .order_by("-revenue")[:limit]
+            .order_by("-revenue")
             .values("id", "full_name", "phone", "orders_total", "revenue")
+            [:limit]
         )
 
     @staticmethod
     def inactive_clients(days: int = 60):
-        """Клиенты, не делавшие заказов более N дней."""
         threshold = date.today() - timedelta(days=days)
         return Client.objects.filter(is_active=True).exclude(
             orders__created_at__date__gte=threshold

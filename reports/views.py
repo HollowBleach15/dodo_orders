@@ -1,6 +1,6 @@
 from datetime import date, timedelta
 from django.contrib.auth.decorators import login_required
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404
 from django.http import HttpResponse
 from openpyxl import Workbook
 
@@ -84,7 +84,6 @@ def products(request):
     })
 
 
-
 @login_required
 def clients(request):
     df, dt = _parse_dates(request)
@@ -127,11 +126,13 @@ def export_revenue_xlsx(request):
     wb.save(resp)
     return resp
 
+
 @login_required
 def order_export_excel(request, pk):
-    order = Order.objects.prefetch_related("items__product").select_related(
-        "client", "branch"
-    ).get(pk=pk)
+    order = get_object_or_404(
+        Order.objects.prefetch_related("items__product").select_related("client", "branch"),
+        pk=pk,
+    )
     data = order_to_excel(order)
     response = HttpResponse(
         data,

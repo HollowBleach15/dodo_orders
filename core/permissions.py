@@ -35,7 +35,20 @@ class IsFranchiseOwner(BasePermission):
 
 
 class IsManagerOrAbove(BasePermission):
-    """ops_manager, admin_staff и is_staff — запись; остальные — только чтение."""
+    def has_permission(self, request, view):
+        user = request.user
+        if not isinstance(user, User):
+            return False
+        if request.method in SAFE_METHODS:
+            return user.is_authenticated
+        return (
+            user.is_staff
+            or _in_group(user, "admin_staff")
+            or _in_group(user, "ops_manager")
+        )
+
+
+class IsManagerOrReadOnly(BasePermission):
     def has_permission(self, request, view):
         user = request.user
         if not isinstance(user, User):

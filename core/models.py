@@ -4,7 +4,6 @@ from decimal import Decimal
 
 
 class Branch(models.Model):
-    """Филиал (пиццерия) франчайзинговой сети."""
     name = models.CharField("Название", max_length=120)
     address = models.CharField("Адрес", max_length=255)
     phone = models.CharField("Телефон", max_length=32, blank=True)
@@ -19,7 +18,6 @@ class Branch(models.Model):
 
 
 class Product(models.Model):
-    """Справочник товаров (пиццы, напитки, доп. позиции)."""
     CATEGORY_CHOICES = [
         ("pizza", "Пицца"),
         ("drink", "Напиток"),
@@ -35,35 +33,26 @@ class Product(models.Model):
         verbose_name_plural = "Товары"
         ordering = ["category", "name"]
 
-    def get_category_display(self) -> str:
-        return dict(self.CATEGORY_CHOICES).get(self.category) or self.category
-
     def __str__(self):
         return f"{self.name} ({self.get_category_display()})"
 
 
 class Client(models.Model):
-    """Клиент (физлицо или организация)."""
     CLIENT_TYPE_CHOICES = [
         ("retail", "Розничный"),
         ("corporate", "Корпоративный"),
         ("franchisee", "Франчайзи"),
     ]
-    client_type = models.CharField(
-        "Тип клиента", max_length=16, choices=CLIENT_TYPE_CHOICES, default="retail"
-    )
-
-    """Автоматическая скидка по типу (применяется в OrderService)"""
+    # Автоматическая скидка по типу (применяется в OrderService)
     CLIENT_DISCOUNT_MAP = {
         "retail": Decimal("0"),
         "corporate": Decimal("5"),
         "franchisee": Decimal("10"),
     }
 
-    @property
-    def default_discount(self) -> Decimal:
-        return self.CLIENT_DISCOUNT_MAP.get(self.client_type, Decimal("0"))
-    
+    client_type = models.CharField(
+        "Тип клиента", max_length=16, choices=CLIENT_TYPE_CHOICES, default="retail"
+    )
     orders: "models.Manager[Order]"
     full_name = models.CharField("ФИО / Название", max_length=200)
     phone = models.CharField("Телефон", max_length=32, unique=True)
@@ -81,6 +70,10 @@ class Client(models.Model):
         return f"{self.full_name} ({self.phone})"
 
     @property
+    def default_discount(self) -> Decimal:
+        return self.CLIENT_DISCOUNT_MAP.get(self.client_type, Decimal("0"))
+
+    @property
     def orders_count(self):
         return self.orders.count()
 
@@ -91,7 +84,6 @@ class Client(models.Model):
 
 
 class Order(models.Model):
-    """Заказ."""
     items: "models.Manager[OrderItem]"
     STATUS_CHOICES = [
         ("new", "Новый"),
@@ -128,9 +120,6 @@ class Order(models.Model):
     def __str__(self):
         return f"Заказ #{self.pk} ({self.get_status_display()})"
 
-    def get_status_display(self) -> str:
-        return dict(self.STATUS_CHOICES).get(self.status) or self.status
-
     def recalc_total(self):
         subtotal = sum((i.line_total for i in self.items.all()), Decimal("0"))
         discount = subtotal * (self.discount_percent / Decimal("100"))
@@ -139,7 +128,6 @@ class Order(models.Model):
 
 
 class OrderItem(models.Model):
-    """Позиция заказа."""
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name="items", verbose_name="Заказ")
     product = models.ForeignKey(Product, on_delete=models.PROTECT, verbose_name="Товар")
     quantity = models.PositiveIntegerField("Количество", default=1)
@@ -161,8 +149,8 @@ class OrderItem(models.Model):
             self.price = self.product.price
         super().save(*args, **kwargs)
 
+
 class UserBranch(models.Model):
-    """Привязка сотрудника к одному или нескольким филиалам."""
     user = models.ForeignKey(
         User, on_delete=models.CASCADE, related_name="user_branches",
         verbose_name="Пользователь"
@@ -179,7 +167,8 @@ class UserBranch(models.Model):
 
     def __str__(self):
         return f"{self.user.username} → {self.branch.name}"
-    
+
+
 User.add_to_class(
     "branches",
     property(lambda self: Branch.objects.filter(user_branches__user=self))

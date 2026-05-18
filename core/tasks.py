@@ -9,7 +9,6 @@ logger = logging.getLogger(__name__)
 
 @shared_task(bind=True, max_retries=3, default_retry_delay=60)
 def notify_client_about_status(self, order_id: int):
-    """Асинхронная отправка уведомления клиенту о смене статуса заказа."""
     from .models import Order
     try:
         order = Order.objects.select_related("client").get(pk=order_id)
@@ -42,18 +41,27 @@ def notify_client_about_status(self, order_id: int):
 
 @shared_task
 def auto_cancel_stale_orders():
-    """Периодически: отменяет 'новые' заказы, висящие > 2 часов."""
     from .models import Order
+    from .services import OrderService
     threshold = timezone.now() - timedelta(hours=2)
     stale = Order.objects.filter(status="new", created_at__lt=threshold)
-    count = stale.update(status="cancelled")
+    count = 0
+    for order in stale:
+        try:
+            OrderService.change_status(order, "cancelled")
+            try:
+                notify_client_about_status.delay(order.pk)
+            except Exception as exc:
+                logger.warning("Не удалось поставить задачу уведомления для #%s: %s", order.pk, exc)
+            count += 1
+        except ValueError as e:
+            logger.warning("Не удалось отменить заказ #%s: %s", order.pk, e)
     logger.info("Авто-отменено заказов: %s", count)
     return count
 
 
 @shared_task
 def send_daily_summary():
-    """Ежедневная сводка администратору."""
     from django.contrib.auth.models import User
     from reports.services import RevenueReport
     today = timezone.now().date()
