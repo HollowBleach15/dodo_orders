@@ -47,7 +47,7 @@ def auto_cancel_stale_orders():
     from .models import Order
     from .services import OrderService
     threshold = timezone.now() - timedelta(hours=2)
-    stale = Order.objects.filter(status="new", created_at__lt=threshold)
+    stale = Order.objects.select_for_update().filter(status="new", created_at__lt=threshold)
     count = 0
     for order in stale:
         try:

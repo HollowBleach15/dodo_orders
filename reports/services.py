@@ -133,9 +133,8 @@ class ClientReport:
                 orders_total=Count("orders"),
                 revenue=Sum("orders__total"),
             )
-            .order_by("-revenue")
             .values("id", "full_name", "phone", "orders_total", "revenue")
-            [:limit]
+            .order_by("-revenue")[:limit]
         )
 
     @staticmethod

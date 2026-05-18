@@ -14,7 +14,6 @@ class OrderService:
     @classmethod
     @transaction.atomic
     def save_order_with_items(cls, order: Order, items_data: list) -> Order:
-        """items_data = [{'product_id': int, 'quantity': int}, ...]"""
         client_pk = getattr(order, "client_id", None)
         if order.discount_percent == Decimal("0") and client_pk:
             from .models import Client
@@ -33,7 +32,7 @@ class OrderService:
                 price=product.price,
             )
         order.recalc_total()
-        order.save(update_fields=["total", "discount_percent"])
+        order.save(update_fields=["total"])
         return order
 
     @classmethod
