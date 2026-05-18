@@ -3,6 +3,7 @@ from celery import shared_task
 from django.core.mail import send_mail
 from django.utils import timezone
 from datetime import timedelta
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -52,7 +53,8 @@ def auto_cancel_stale_orders():
         try:
             OrderService.change_status(order, "cancelled")
             try:
-                notify_client_about_status.delay(order.pk)
+                task: Any = notify_client_about_status
+                task.delay(order.pk)
             except Exception as exc:
                 logger.warning("Не удалось поставить задачу уведомления для #%s: %s", order.pk, exc)
             count += 1

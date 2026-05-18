@@ -72,7 +72,8 @@ class OrderViewSet(viewsets.ModelViewSet):
 
         try:
             from .tasks import notify_client_about_status
-            notify_client_about_status.delay(order.pk)
+            task: Any = notify_client_about_status
+            task.delay(order.pk)
         except Exception as exc:
             import logging
             logging.getLogger(__name__).warning(
