@@ -19,14 +19,14 @@ from .permissions import IsManagerOrAbove, IsManagerOrReadOnly
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     @classmethod
     def get_token(cls, user: Any):
-        token = super().get_token(user)
+        token = super().get_token(user)  # type: ignore[misc]
         if isinstance(user, User):
             token["username"] = user.username
             token["is_staff"] = user.is_staff
             group_names: list[str] = list(
                 user.groups.values_list("name", flat=True)
             )
-            token["groups"] = group_names
+            token["groups"] = group_names  # type: ignore[index]
         return token
 
 

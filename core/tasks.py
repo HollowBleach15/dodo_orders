@@ -73,6 +73,7 @@ def send_daily_summary():
         User.objects.filter(is_superuser=True).exclude(email="")
     )
     for admin in admins:
+        email: str = admin.email  # type: ignore[assignment]
         send_mail(
             subject=f"Сводка за {today.strftime('%d.%m.%Y')}",
             message=(
@@ -81,7 +82,7 @@ def send_daily_summary():
                 f"Средний чек: {data['avg_check']} ₽"
             ),
             from_email="noreply@dodo-franchise.ru",
-            recipient_list=[admin.email],
+            recipient_list=[email],
             fail_silently=True,
         )
     return f"Отправлено {len(admins)} писем"
