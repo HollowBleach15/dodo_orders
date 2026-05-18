@@ -4,7 +4,7 @@ from . import views, api
 
 router = DefaultRouter()
 router.register("clients", api.ClientViewSet)
-router.register("orders", api.OrderViewSet)
+router.register("orders", api.OrderViewSet, basename="order")
 router.register("products", api.ProductViewSet)
 router.register("branches", api.BranchViewSet)
 

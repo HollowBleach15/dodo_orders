@@ -1,4 +1,3 @@
-version: "3.9"
 
 services:
   db:
@@ -45,7 +44,7 @@ services:
   celery-beat:
     build: .
     env_file: .env
-    command: celery -A dodo_orders beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler
+    command: sh /app/entrypoint_beat.sh
     depends_on:
       db: {condition: service_healthy}
       redis: {condition: service_healthy}
