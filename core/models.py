@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
 from decimal import Decimal
+from typing import TYPE_CHECKING
 
 
 class Branch(models.Model):
@@ -28,13 +29,16 @@ class Product(models.Model):
     price = models.DecimalField("Цена", max_digits=10, decimal_places=2)
     is_active = models.BooleanField("Активен", default=True)
 
+    if TYPE_CHECKING:
+        get_category_display: "models.CharField.get_internal_type"
+
     class Meta:
         verbose_name = "Товар"
         verbose_name_plural = "Товары"
         ordering = ["category", "name"]
 
     def __str__(self):
-        return f"{self.name} ({self.get_category_display()})"
+        return f"{self.name} ({self.get_category_display()})"  # type: ignore[attr-defined]
 
 
 class Client(models.Model):
@@ -108,6 +112,9 @@ class Order(models.Model):
     created_at = models.DateTimeField("Создан", auto_now_add=True)
     updated_at = models.DateTimeField("Обновлён", auto_now=True)
 
+    if TYPE_CHECKING:
+        get_status_display: "models.CharField.get_internal_type"
+
     class Meta:
         verbose_name = "Заказ"
         verbose_name_plural = "Заказы"
@@ -118,7 +125,7 @@ class Order(models.Model):
         ]
 
     def __str__(self):
-        return f"Заказ #{self.pk} ({self.get_status_display()})"
+        return f"Заказ #{self.pk} ({self.get_status_display()})"  # type: ignore[attr-defined]
 
     def recalc_total(self):
         subtotal = sum((i.line_total for i in self.items.all()), Decimal("0"))

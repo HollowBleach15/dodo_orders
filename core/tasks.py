@@ -20,12 +20,14 @@ def notify_client_about_status(self, order_id: int):
         logger.info("Клиент %s без email — пропуск", order.client.pk)
         return
 
+    status_display: str = order.get_status_display()  # type: ignore[attr-defined]
+
     try:
         send_mail(
-            subject=f"Заказ #{order.pk}: {order.get_status_display()}",
+            subject=f"Заказ #{order.pk}: {status_display}",
             message=(
                 f"Здравствуйте, {order.client.full_name}!\n\n"
-                f"Статус вашего заказа #{order.pk}: {order.get_status_display()}.\n"
+                f"Статус вашего заказа #{order.pk}: {status_display}.\n"
                 f"Сумма: {order.total} ₽.\n\n"
                 f"С уважением, Додо Франчайзинг."
             ),

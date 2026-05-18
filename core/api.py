@@ -5,6 +5,7 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
 from django_filters.rest_framework import DjangoFilterBackend
 from django.contrib.auth.models import User
+from django.db.models import QuerySet
 
 from .models import Client, Order, Product, Branch
 from .serializers import (
@@ -44,7 +45,7 @@ class OrderViewSet(viewsets.ModelViewSet):
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ["status", "branch", "client", "order_type"]
 
-    def get_queryset(self):
+    def get_queryset(self) -> QuerySet[Order]:
         user = self.request.user
         qs = (
             Order.objects.select_related("client", "branch")
@@ -52,11 +53,9 @@ class OrderViewSet(viewsets.ModelViewSet):
         )
         if not isinstance(user, User):
             return qs
-        if user.groups.filter(
-            name__in=["branch_employee", "franchise_owner"]
-        ).exists():
-            branch_ids = user.branches.values_list("id", flat=True)
-            qs = qs.filter(branch__in=branch_ids)
+        if user.groups.filter(name__in=["branch_employee", "franchise_owner"]).exists():
+            branch_qs: QuerySet[Branch] = Branch.objects.filter(user_branches__user=user)
+            qs = qs.filter(branch__in=branch_qs)
         return qs
 
     @action(detail=True, methods=["post"])
