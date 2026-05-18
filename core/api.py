@@ -21,7 +21,7 @@ class IsManagerOrReadOnly(permissions.BasePermission):
         user = request.user
         if request.method in permissions.SAFE_METHODS:
             return bool(user and user.is_authenticated)
-        if not isinstance(user, AbstractUser):
+        if not isinstance(user, User):
             return False
         return bool(
             user.is_staff
@@ -35,7 +35,7 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     @classmethod
     def get_token(cls, user):
         token = super().get_token(user)
-        if isinstance(user, AbstractUser):
+        if isinstance(user, User):
             token["username"] = user.username
             token["is_staff"] = user.is_staff
             token["groups"] = list(user.groups.values_list("name", flat=True))
@@ -67,7 +67,7 @@ class OrderViewSet(viewsets.ModelViewSet):
             Order.objects.select_related("client", "branch")
             .prefetch_related("items__product")
         )
-        if not isinstance(user, User):   # ← вместо user.groups.filter(...)
+        if not isinstance(user, User):
             return qs
         if user.groups.filter(
             name__in=["branch_employee", "franchise_owner"]

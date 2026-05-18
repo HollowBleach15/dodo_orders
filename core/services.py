@@ -23,9 +23,10 @@ class OrderService:
     def save_order_with_items(cls, order: Order, items_data: list) -> Order:
         """items_data = [{'product_id': int, 'quantity': int}, ...]"""
         order.save()
-        if order.discount_percent == Decimal("0") and order.client_id:
+        client_pk = getattr(order, "client_id", None)
+        if order.discount_percent == Decimal("0") and client_pk:
             from .models import Client
-            client = Client.objects.get(pk=order.client_id)
+            client = Client.objects.get(pk=client_pk)
             order.discount_percent = client.default_discount
         OrderItem.objects.filter(order=order).delete()
         for row in items_data:

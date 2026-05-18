@@ -1,6 +1,5 @@
 # reports/export.py
 import io
-from decimal import Decimal
 from openpyxl import Workbook
 from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
 
@@ -8,6 +7,7 @@ def order_to_excel(order) -> bytes:
     """Генерирует Excel-накладную для заказа. Возвращает bytes."""
     wb = Workbook()
     ws = wb.active
+    assert ws is not None, "Workbook должен иметь активный лист"
     ws.title = f"Заказ #{order.pk}"
 
     header_font = Font(bold=True, size=12)

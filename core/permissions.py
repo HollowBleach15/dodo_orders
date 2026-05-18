@@ -20,11 +20,10 @@ class IsOpsManager(BasePermission):
 
 class IsBranchEmployee(BasePermission):
     def has_permission(self, request, view):
-        def has_permission(self, request, view):
-            user = request.user
-            if not isinstance(user, User):
-                return False
-            return _in_group(user, "branch_employee")
+        user = request.user
+        if not isinstance(user, User):
+            return False
+        return _in_group(user, "branch_employee")
 
 
 class IsFranchiseOwner(BasePermission):
