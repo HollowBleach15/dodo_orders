@@ -1,7 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
 from decimal import Decimal
-from typing import TYPE_CHECKING
 
 
 class Branch(models.Model):
@@ -28,9 +27,6 @@ class Product(models.Model):
     category = models.CharField("Категория", max_length=16, choices=CATEGORY_CHOICES)
     price = models.DecimalField("Цена", max_digits=10, decimal_places=2)
     is_active = models.BooleanField("Активен", default=True)
-
-    if TYPE_CHECKING:
-        get_category_display: "models.CharField.get_internal_type"
 
     class Meta:
         verbose_name = "Товар"
@@ -111,9 +107,6 @@ class Order(models.Model):
     comment = models.TextField("Комментарий", blank=True)
     created_at = models.DateTimeField("Создан", auto_now_add=True)
     updated_at = models.DateTimeField("Обновлён", auto_now=True)
-
-    if TYPE_CHECKING:
-        get_status_display: "models.CharField.get_internal_type"
 
     class Meta:
         verbose_name = "Заказ"

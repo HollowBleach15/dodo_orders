@@ -69,7 +69,7 @@ def send_daily_summary():
     today = timezone.now().date()
     data = RevenueReport.daily_revenue(today, today)
 
-    admins = list(
+    admins: list[User] = list(
         User.objects.filter(is_superuser=True).exclude(email="")
     )
     for admin in admins:

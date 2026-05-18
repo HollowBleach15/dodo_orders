@@ -6,6 +6,7 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 from django_filters.rest_framework import DjangoFilterBackend
 from django.contrib.auth.models import User
 from django.db.models import QuerySet
+from typing import Any
 
 from .models import Client, Order, Product, Branch
 from .serializers import (
@@ -17,12 +18,15 @@ from .permissions import IsManagerOrAbove, IsManagerOrReadOnly
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     @classmethod
-    def get_token(cls, user):
+    def get_token(cls, user: Any):
         token = super().get_token(user)
         if isinstance(user, User):
             token["username"] = user.username
             token["is_staff"] = user.is_staff
-            token["groups"] = list(user.groups.values_list("name", flat=True))
+            group_names: list[str] = list(
+                user.groups.values_list("name", flat=True)
+            )
+            token["groups"] = group_names
         return token
 
 
